@@ -7,7 +7,7 @@ import nrrd
 output_size =[112, 112, 80]
 
 def covert_h5():
-    listt = glob('/content/drive/MyDrive/0SSL/Dataset/2018_UTAH_MICCAI/Training Set/*/lgemri.nrrd')
+    listt = glob('/media/iot/data1/RAKIB_DATASET/Dataset/2018_UTAH_MICCAI/Training Set/*/lgemri.nrrd')
     for item in tqdm(listt):
         image, img_header = nrrd.read(item)
         label, gt_header = nrrd.read(item.replace('lgemri.nrrd', 'laendo.nrrd'))

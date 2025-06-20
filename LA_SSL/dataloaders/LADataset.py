@@ -142,8 +142,8 @@ class ToTensor(object):
 
 
 if __name__ == "__main__":
-    data_dir = "/content/drive/MyDrive/0SSL/Dataset/2018_UTAH_MICCAI"
-    list_dir = "/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/Datasets/la/data_split"
+    data_dir = "/media/iot/data1/RAKIB_DATASET/Dataset/2018_UTAH_MICCAI"
+    list_dir = "/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split"
 
     print("\n--- Train Split ---")
     train_dataset = LAHeart(data_dir, list_dir, split="train_lab")

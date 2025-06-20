@@ -36,7 +36,7 @@ from pancreas.Vnet import VNet
 from networks.ResVNet import ResVNet
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--root_path', type=str, default='/content/drive/MyDrive/0SSL/Dataset/2018_UTAH_MICCAI', help='Name of Dataset')
+parser.add_argument('--root_path', type=str, default='/media/iot/data1/RAKIB_DATASET/Dataset/2018_UTAH_MICCAI', help='Name of Dataset')
 parser.add_argument('--exp', type=str, default='SDCL', help='exp_name')
 parser.add_argument('--model', type=str, default='VNet', help='model_name')
 parser.add_argument('--pre_max_iteration', type=int, default=2000, help='maximum pre-train iteration to train')
@@ -203,10 +203,10 @@ def pre_train(args, snapshot_path):
     model2 = create_ResVnet()
 
     c_batch_size = 2
-    trainset_lab_a = LAHeart(train_data_path, "/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/Datasets/la/data_split", split='train_lab', logging=logging)
+    trainset_lab_a = LAHeart(train_data_path, "/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split", split='train_lab', logging=logging)
     lab_loader_a = DataLoader(trainset_lab_a, batch_size=c_batch_size, shuffle=False, num_workers=0, drop_last=True)
 
-    trainset_lab_b = LAHeart(train_data_path, "/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/Datasets/la/data_split", split='train_lab', reverse=True, logging=logging)
+    trainset_lab_b = LAHeart(train_data_path, "/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split", split='train_lab', reverse=True, logging=logging)
     lab_loader_b = DataLoader(trainset_lab_b, batch_size=c_batch_size, shuffle=False, num_workers=0, drop_last=True)
 
 
@@ -222,7 +222,7 @@ def pre_train(args, snapshot_path):
     iter_num = 0
     best_dice = 0
     best_dice2 = 0
-    max_epoch = 4 #81 silo
+    max_epoch = 81 #81 silo
     iterator = tqdm(range(1, max_epoch), ncols=70)
     for epoch_num in iterator:
         logging.info("\n")
@@ -261,7 +261,7 @@ def pre_train(args, snapshot_path):
             logging.info(
                 'iteration %d : loss: %03f, loss_dice: %03f, loss_ce: %03f' % (iter_num, loss, loss_dice, loss_ce))
 
-        if epoch_num % 2 == 0:
+        if epoch_num % 5 == 0:
             model.eval()
             dice_sample = test_3d_patch.var_all_case_LA(model, num_classes=num_classes, patch_size=patch_size,
                                                         stride_xy=18, stride_z=4)
@@ -297,16 +297,16 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
 
 
     c_batch_size = 2
-    trainset_lab_a = LAHeart(train_data_path, "/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/Datasets/la/data_split", split='train_lab', logging=logging)
+    trainset_lab_a = LAHeart(train_data_path, "/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split", split='train_lab', logging=logging)
     lab_loader_a = DataLoader(trainset_lab_a, batch_size=c_batch_size, shuffle=False, num_workers=0, drop_last=True)
 
-    trainset_lab_b = LAHeart(train_data_path, "/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/Datasets/la/data_split", split='train_lab', reverse=True, logging=logging)
+    trainset_lab_b = LAHeart(train_data_path, "/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split", split='train_lab', reverse=True, logging=logging)
     lab_loader_b = DataLoader(trainset_lab_b, batch_size=c_batch_size, shuffle=False, num_workers=0, drop_last=True)
 
-    trainset_unlab_a = LAHeart(train_data_path, "/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/Datasets/la/data_split", split='train_unlab', logging=logging)
+    trainset_unlab_a = LAHeart(train_data_path, "/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split", split='train_unlab', logging=logging)
     unlab_loader_a = DataLoader(trainset_unlab_a, batch_size=c_batch_size, shuffle=False, num_workers=0, drop_last=True)
 
-    trainset_unlab_b = LAHeart(train_data_path, "/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/Datasets/la/data_split", split='train_unlab', reverse=True, logging=logging)
+    trainset_unlab_b = LAHeart(train_data_path, "/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split", split='train_unlab', reverse=True, logging=logging)
     unlab_loader_b = DataLoader(trainset_unlab_b, batch_size=c_batch_size, shuffle=False, num_workers=0, drop_last=True)
 
 
@@ -333,7 +333,7 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
     best_dice = 0
     best_dice2 = 0
     mean_best_dice = 0
-    max_epoch = 4 #276 silo
+    max_epoch = 200 #276 silo
     iterator = tqdm(range(1, max_epoch), ncols=70)
     for epoch in iterator:
         logging.info("\n")
@@ -423,7 +423,7 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
 
             update_ema_variables(model1, ema_model1, 0.99)
 
-        if epoch % 2 == 0:
+        if epoch % 5 == 0:
             model1.eval()
             model2.eval()
             dice_sample = test_3d_patch.var_all_case_LA(model1, num_classes=num_classes, patch_size=patch_size,
@@ -476,15 +476,15 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
 
 if __name__ == "__main__":
     ## make logger file
-    pre_snapshot_path = "/content/drive/MyDrive/0SSL/rakibiuict/model/SDCL/LA_{}_{}_labeled/pre_train".format(args.exp, args.labelnum)
-    self_snapshot_path = "/content/drive/MyDrive/0SSL/rakibiuict/model/SDCL/LA_{}_{}_labeled/self_train".format(args.exp, args.labelnum)
+    pre_snapshot_path = "/media/iot/data1/RAKIB_DATASET/iot_pc/model/SDCL/LA_{}_{}_labeled/pre_train".format(args.exp, args.labelnum)
+    self_snapshot_path = "/media/iot/data1/RAKIB_DATASET/iot_pc/model/SDCL/LA_{}_{}_labeled/self_train".format(args.exp, args.labelnum)
     print("Starting SDCL training.")
     for snapshot_path in [pre_snapshot_path, self_snapshot_path]:
         if not os.path.exists(snapshot_path):
             os.makedirs(snapshot_path)
         if os.path.exists(snapshot_path + '/code'):
             shutil.rmtree(snapshot_path + '/code')
-    shutil.copy('/content/drive/MyDrive/0SSL/rakibiuict/LA_SSL/LA_train.py', self_snapshot_path)
+    shutil.copy('/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/LA_train.py', self_snapshot_path)
     # -- Pre-Training
     logging.basicConfig(filename=pre_snapshot_path + "/log.txt", level=logging.INFO,
                         format='[%(asctime)s.%(msecs)03d] %(message)s', datefmt='%H:%M:%S')
