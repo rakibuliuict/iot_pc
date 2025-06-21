@@ -1,6 +1,7 @@
 from asyncore import write
 import imp
 import os
+import pandas as pdk
 from sre_parse import SPECIAL_CHARS
 import sys
 from xml.etree.ElementInclude import default_loader
@@ -19,6 +20,8 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import pdb
+import h5py
+
 
 from yaml import parse
 from skimage.measure import label
@@ -222,6 +225,9 @@ def pre_train(args, snapshot_path):
     iter_num = 0
     best_dice = 0
     best_dice2 = 0
+
+    metric_log = []
+
     max_epoch = 81 #81 silo
     iterator = tqdm(range(1, max_epoch), ncols=70)
     for epoch_num in iterator:
@@ -333,7 +339,10 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
     best_dice = 0
     best_dice2 = 0
     mean_best_dice = 0
-    max_epoch = 200 #276 silo
+
+    metric_log = []
+
+    max_epoch = 276 #276 silo
     iterator = tqdm(range(1, max_epoch), ncols=70)
     for epoch in iterator:
         logging.info("\n")
@@ -423,7 +432,7 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
 
             update_ema_variables(model1, ema_model1, 0.99)
 
-        if epoch % 5 == 0:
+        if epoch % 2 == 0:
             model1.eval()
             model2.eval()
             dice_sample = test_3d_patch.var_all_case_LA(model1, num_classes=num_classes, patch_size=patch_size,
@@ -432,6 +441,26 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
                                                          stride_xy=18, stride_z=4)
             mean_dice_sample = test_3d_patch.var_all_case_LA_mean(model1, model2, num_classes=num_classes,
                                                                   patch_size=patch_size, stride_xy=18, stride_z=4)
+            
+            # Pick a test image to calculate full metrics on (you can loop over more if needed)
+            with open('/media/iot/data1/RAKIB_DATASET/iot_pc/LA_SSL/Datasets/la/data_split/test.txt', 'r') as f:
+                test_list = f.readlines()
+
+            sample_image_path = "/media/iot/data1/RAKIB_DATASET/Dataset/2018_UTAH_MICCAI/Training Set/" + test_list[0].strip() + "/mri_norm2.h5"
+            h5f = h5py.File(sample_image_path, 'r')
+            image = h5f['image'][:]
+            label = h5f['label'][:]
+            prediction, _ = test_3d_patch.test_single_case_mean(model1, model2, image, stride_xy=18, stride_z=4, patch_size=patch_size, num_classes=num_classes)
+
+            dice, jc, hd, asd = test_3d_patch.calculate_metric_percase(prediction, label)
+
+            metric_log.append({
+                "Epoch": epoch,
+                "Dice": round(dice, 4),
+                "Jaccard": round(jc, 4),
+                "HD95": round(hd, 2),
+                "ASD": round(asd, 2)
+            })
 
             if dice_sample > best_dice:
                 best_dice = round(dice_sample, 4)
@@ -472,6 +501,16 @@ def self_train(args, pre_snapshot_path, self_snapshot_path):
 
             model1.train()
             model2.train()
+
+    # STEP 4: Save metrics to Excel file after training ends
+    if len(metric_log) > 0:
+        # print("Type of pd:", type(pd))
+        df_metrics = pdk.DataFrame(metric_log)
+        excel_path = os.path.join(self_snapshot_path, "metrics_log.xlsx")
+        df_metrics.to_excel(excel_path, index=False)
+        logging.info(f"Saved metrics log to {excel_path}")
+    else:
+        logging.warning("No metrics were logged. Excel file not created.")
 
 
 if __name__ == "__main__":
